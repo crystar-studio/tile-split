@@ -173,6 +173,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
         </div>
       </div>
       <div class="meta"><span id="outInfo"></span></div>
+      <p class="note warn" id="cropWarn" hidden></p>
     </section>
   </div>
 
@@ -231,7 +232,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 /* ============ i18n ============ */
 const LANGS=[["ja","日本語"],["en","English"],["zh-CN","简体中文"],["zh-TW","繁體中文"],["ko","한국어"],["es","Español"],["fr","Français"],["pt","Português"]];
 const I18N={
-ja:{other:"数を入力",sub:"X投稿用の画像分割ツール。1枚の画像を最大20枚に分けて、TLでつながって見えるように書き出します。",privShort:"画像はサーバーに送信されません。",more:"詳しく",
+ja:{cropWarn:"{0}枚目は横幅が広すぎるため、TLでは左右が切れて表示されます（Xが表示する横長の上限は約1.18:1）。分割数を増やすか線を動かしてください。",other:"数を入力",sub:"X投稿用の画像分割ツール。1枚の画像を最大20枚に分けて、TLでつながって見えるように書き出します。",privShort:"画像はサーバーに送信されません。",more:"詳しく",
 upload:"画像を選択",uploadSub:"またはドラッグ＆ドロップ・貼り付け",change:"画像を変更",hint:"分割線をドラッグして位置を調整。選んだ線は ← → で1pxずつ動かせます",
 count:"分割数",over20:"Xに一度に投稿できるのは20枚までです。",
 gap:"TLの隙間を考慮する",gapOn:"画像の間の隙間（約{0}px）を自動で計算して切り落とします",gapOff:"隙間を考慮せず、そのまま分割します",
@@ -242,7 +243,7 @@ stale:"設定が変わりました。もう一度作成してください。",ma
 out:"{0}枚 ・ 高さ {1}px",
 privTitle:"プライバシーと安全性",safe1:"画像の読み込み・分割・書き出しは、すべてお使いの端末のブラウザ内で行われます。",safe2:"画像がサーバーにアップロード・保存されることはありません。",safe3:"画像がAIの学習などに利用されることは一切ありません。",safe4:"外部のライブラリ・フォント・解析ツールは読み込んでいません。ページを閉じると画像データは消えます。",
 foot:"TileSplit ・ Xの表示仕様は変更される場合があります。"},
-en:{other:"Custom",sub:"Split one image into up to 20 pieces for an X post, exported so they line up seamlessly on the timeline.",privShort:"Your image is never sent to a server.",more:"Learn more",
+en:{cropWarn:"Piece {0} is too wide, so the timeline crops its sides (X shows at most about 1.18:1). Add pieces or move the lines.",other:"Custom",sub:"Split one image into up to 20 pieces for an X post, exported so they line up seamlessly on the timeline.",privShort:"Your image is never sent to a server.",more:"Learn more",
 upload:"Choose an image",uploadSub:"or drag & drop / paste",change:"Change image",hint:"Drag a split line to move it. ← → nudges the selected line by 1px",
 count:"Pieces",over20:"X allows up to 20 images per post.",
 gap:"Account for timeline gaps",gapOn:"Automatically cuts out the gap between images (about {0}px)",gapOff:"Splits as-is, ignoring the gaps",
@@ -253,7 +254,7 @@ stale:"Settings changed. Create the images again.",making:"Creating… {0}/{1}",
 out:"{0} pieces · {1}px tall",
 privTitle:"Privacy & safety",safe1:"Loading, splitting and exporting all happen inside your browser, on your device.",safe2:"Your image is never uploaded to or stored on a server.",safe3:"Your image is never used for AI training or anything else.",safe4:"No external libraries, fonts or analytics are loaded. Closing the page discards your image.",
 foot:"TileSplit · X's display rules may change."},
-"zh-CN":{other:"输入",sub:"X 发帖用图片分割工具。将一张图片分成最多 20 张，在时间线上无缝拼接。",privShort:"图片不会发送到服务器。",more:"了解详情",
+"zh-CN":{cropWarn:"第 {0} 张过宽，时间线会裁掉左右两侧（X 最宽显示约 1.18:1）。请增加分割数或移动分割线。",other:"输入",sub:"X 发帖用图片分割工具。将一张图片分成最多 20 张，在时间线上无缝拼接。",privShort:"图片不会发送到服务器。",more:"了解详情",
 upload:"选择图片",uploadSub:"或拖放 / 粘贴",change:"更换图片",hint:"拖动分割线调整位置。选中的线可用 ← → 每次移动 1px",
 count:"分割数量",over20:"X 每条帖子最多可发 20 张图片。",
 gap:"考虑时间线间隙",gapOn:"自动计算并裁掉图片之间的间隙（约 {0}px）",gapOff:"不考虑间隙，直接分割",
@@ -264,7 +265,7 @@ stale:"设置已更改，请重新生成。",making:"生成中… {0}/{1}",made:
 out:"{0} 张 · 高 {1}px",
 privTitle:"隐私与安全",safe1:"图片的读取、分割和导出全部在您设备的浏览器内完成。",safe2:"图片不会被上传或保存到服务器。",safe3:"图片绝不会被用于 AI 训练等任何用途。",safe4:"不加载任何外部库、字体或统计工具。关闭页面后图片数据即被清除。",
 foot:"TileSplit · X 的显示规则可能会变更。"},
-"zh-TW":{other:"輸入",sub:"X 發文用圖片分割工具。將一張圖片分成最多 20 張，在時間軸上無縫拼接。",privShort:"圖片不會傳送到伺服器。",more:"了解詳情",
+"zh-TW":{cropWarn:"第 {0} 張過寬，時間軸會裁掉左右兩側（X 最寬顯示約 1.18:1）。請增加分割數或移動分割線。",other:"輸入",sub:"X 發文用圖片分割工具。將一張圖片分成最多 20 張，在時間軸上無縫拼接。",privShort:"圖片不會傳送到伺服器。",more:"了解詳情",
 upload:"選擇圖片",uploadSub:"或拖放 / 貼上",change:"更換圖片",hint:"拖曳分割線調整位置。選取的線可用 ← → 每次移動 1px",
 count:"分割數量",over20:"X 每則貼文最多可發 20 張圖片。",
 gap:"考慮時間軸間隙",gapOn:"自動計算並裁掉圖片之間的間隙（約 {0}px）",gapOff:"不考慮間隙，直接分割",
@@ -275,7 +276,7 @@ stale:"設定已變更，請重新產生。",making:"產生中… {0}/{1}",made:
 out:"{0} 張 · 高 {1}px",
 privTitle:"隱私與安全",safe1:"圖片的讀取、分割與匯出全部在您裝置的瀏覽器內完成。",safe2:"圖片不會被上傳或儲存到伺服器。",safe3:"圖片絕不會被用於 AI 訓練等任何用途。",safe4:"不載入任何外部函式庫、字型或分析工具。關閉頁面後圖片資料即被清除。",
 foot:"TileSplit · X 的顯示規則可能會變更。"},
-ko:{other:"직접 입력",sub:"X 게시용 이미지 분할 도구. 한 장의 이미지를 최대 20장으로 나눠 타임라인에서 자연스럽게 이어지도록 저장합니다.",privShort:"이미지는 서버로 전송되지 않습니다.",more:"자세히",
+ko:{cropWarn:"{0}번째 이미지가 너무 넓어 타임라인에서 좌우가 잘립니다(X의 가로 최대 비율은 약 1.18:1). 분할 수를 늘리거나 선을 옮겨 주세요.",other:"직접 입력",sub:"X 게시용 이미지 분할 도구. 한 장의 이미지를 최대 20장으로 나눠 타임라인에서 자연스럽게 이어지도록 저장합니다.",privShort:"이미지는 서버로 전송되지 않습니다.",more:"자세히",
 upload:"이미지 선택",uploadSub:"또는 드래그 앤 드롭 / 붙여넣기",change:"이미지 변경",hint:"분할선을 드래그해 위치를 조정하세요. 선택한 선은 ← → 로 1px씩 이동",
 count:"분할 수",over20:"X는 한 게시물에 최대 20장까지 올릴 수 있습니다.",
 gap:"타임라인 간격 고려",gapOn:"이미지 사이 간격(약 {0}px)을 자동 계산해 잘라냅니다",gapOff:"간격을 고려하지 않고 그대로 분할합니다",
@@ -286,7 +287,7 @@ stale:"설정이 변경되었습니다. 다시 만들어 주세요.",making:"만
 out:"{0}장 · 높이 {1}px",
 privTitle:"개인정보 및 안전",safe1:"이미지 불러오기·분할·저장은 모두 기기의 브라우저 안에서 처리됩니다.",safe2:"이미지가 서버에 업로드되거나 저장되지 않습니다.",safe3:"이미지가 AI 학습 등 어떤 용도로도 사용되지 않습니다.",safe4:"외부 라이브러리·폰트·분석 도구를 불러오지 않습니다. 페이지를 닫으면 이미지 데이터가 사라집니다.",
 foot:"TileSplit · X의 표시 사양은 변경될 수 있습니다."},
-es:{other:"Escribir",sub:"Divide una imagen en hasta 20 piezas para un post de X, alineadas sin cortes en la cronología.",privShort:"Tu imagen nunca se envía a un servidor.",more:"Más info",
+es:{cropWarn:"La pieza {0} es demasiado ancha y la cronología recorta sus lados (X muestra como máximo ~1.18:1). Añade piezas o mueve las líneas.",other:"Escribir",sub:"Divide una imagen en hasta 20 piezas para un post de X, alineadas sin cortes en la cronología.",privShort:"Tu imagen nunca se envía a un servidor.",more:"Más info",
 upload:"Elegir imagen",uploadSub:"o arrastra y suelta / pega",change:"Cambiar imagen",hint:"Arrastra una línea de corte para moverla. ← → mueve 1px la línea seleccionada",
 count:"Piezas",over20:"X permite hasta 20 imágenes por post.",
 gap:"Tener en cuenta los espacios",gapOn:"Calcula y recorta automáticamente el espacio entre imágenes (unos {0}px)",gapOff:"Divide tal cual, sin tener en cuenta los espacios",
@@ -297,7 +298,7 @@ stale:"Los ajustes cambiaron. Vuelve a crear las imágenes.",making:"Creando… 
 out:"{0} piezas · {1}px de alto",
 privTitle:"Privacidad y seguridad",safe1:"La carga, división y exportación ocurren dentro de tu navegador, en tu dispositivo.",safe2:"Tu imagen nunca se sube ni se guarda en un servidor.",safe3:"Tu imagen nunca se usa para entrenar IA ni para nada más.",safe4:"No se cargan librerías, fuentes ni analíticas externas. Al cerrar la página, la imagen se descarta.",
 foot:"TileSplit · Las reglas de visualización de X pueden cambiar."},
-fr:{other:"Saisir",sub:"Découpez une image en jusqu'à 20 morceaux pour un post X, parfaitement alignés dans le fil.",privShort:"Votre image n'est jamais envoyée à un serveur.",more:"En savoir plus",
+fr:{cropWarn:"Le morceau {0} est trop large : le fil rogne ses côtés (X affiche au plus ~1,18:1). Ajoutez des morceaux ou déplacez les lignes.",other:"Saisir",sub:"Découpez une image en jusqu'à 20 morceaux pour un post X, parfaitement alignés dans le fil.",privShort:"Votre image n'est jamais envoyée à un serveur.",more:"En savoir plus",
 upload:"Choisir une image",uploadSub:"ou glisser-déposer / coller",change:"Changer d'image",hint:"Faites glisser une ligne de découpe. ← → déplace la ligne sélectionnée de 1px",
 count:"Morceaux",over20:"X autorise 20 images maximum par post.",
 gap:"Tenir compte des espaces du fil",gapOn:"Calcule et retire automatiquement l'espace entre les images (env. {0}px)",gapOff:"Découpe telle quelle, sans tenir compte des espaces",
@@ -308,7 +309,7 @@ stale:"Réglages modifiés. Recréez les images.",making:"Création… {0}/{1}",
 out:"{0} morceaux · {1}px de haut",
 privTitle:"Confidentialité et sécurité",safe1:"Le chargement, le découpage et l'export se font dans votre navigateur, sur votre appareil.",safe2:"Votre image n'est jamais envoyée ni stockée sur un serveur.",safe3:"Votre image n'est jamais utilisée pour entraîner une IA ni pour quoi que ce soit d'autre.",safe4:"Aucune bibliothèque, police ou outil d'analyse externe n'est chargé. Fermer la page efface l'image.",
 foot:"TileSplit · Les règles d'affichage de X peuvent changer."},
-pt:{other:"Digitar",sub:"Divida uma imagem em até 20 partes para um post no X, alinhadas sem emendas na timeline.",privShort:"Sua imagem nunca é enviada a um servidor.",more:"Saiba mais",
+pt:{cropWarn:"A parte {0} é larga demais e a timeline corta as laterais (o X mostra no máximo ~1,18:1). Aumente as partes ou mova as linhas.",other:"Digitar",sub:"Divida uma imagem em até 20 partes para um post no X, alinhadas sem emendas na timeline.",privShort:"Sua imagem nunca é enviada a um servidor.",more:"Saiba mais",
 upload:"Escolher imagem",uploadSub:"ou arraste e solte / cole",change:"Trocar imagem",hint:"Arraste uma linha de corte para movê-la. ← → move a linha selecionada 1px",
 count:"Partes",over20:"O X permite até 20 imagens por post.",
 gap:"Considerar espaços da timeline",gapOn:"Calcula e remove automaticamente o espaço entre as imagens (cerca de {0}px)",gapOff:"Divide como está, sem considerar os espaços",
@@ -352,13 +353,30 @@ if(!WEBP_OK&&S.fmt==="webp")S.fmt="png";
 const clamp=(v,a,b)=>Math.min(Math.max(v,a),Math.max(a,b));
 
 /* ============ geometry ============
-   X shows the pieces in one horizontal row at the same height, about 249px wide each with a 2px gap.
-   The gap in source pixels follows from that scale (based on the average piece width).
+   Gap model read from x.com's own carousel layout (ScrollSnap-List), Nov 2026:
+   - each picture card has a 1px border and the list has gap:4px, so 6px separate two pictures
+   - every card shares one border-box height h:
+       h = (W - 4) / (a1 + 0.67*a2), clamped to [0.68*W, 1.24446*W]
+     W = media column width (518px on the home timeline); a1, a2 = width/height of the first two
+     pictures, each capped at 1/0.85 (wider pictures are cropped to that ratio on the timeline)
+   With the height capped, the gap is 6/642.6 = 0.93% of the picture height, which matches the
+   iOS app (12px / 1286px at @3x).
    S.cuts holds the centre of each split line as a fraction of the image width (n-1 values). */
-const TL_TILE_W=249, TL_GAP=2;
-function gapPx(){if(!S.gapOn||!S.W)return 0;const g=TL_GAP/TL_TILE_W;return g*S.W/(S.n+(S.n-1)*g);}
+const X_W=518, X_GAP=4, X_BORDER=1, X_PEEK=0.67, X_HMIN=0.68, X_HMAX=1.24446, X_AMAX=1/0.85;
+function xCardHeight(){
+  let w1,w2;
+  if(S.n>1&&S.cuts&&S.cuts.length===S.n-1){const c=S.cuts.map(f=>f*S.W);w1=c[0];w2=(S.n>2?c[1]:S.W)-c[0];}
+  else{w1=w2=S.W/S.n;}
+  const a1=Math.min(w1/S.H,X_AMAX),a2=Math.min(w2/S.H,X_AMAX);
+  return clamp((X_W-X_GAP)/(a1+X_PEEK*a2),X_HMIN*X_W,X_HMAX*X_W);
+}
+function gapPx(){
+  if(!S.gapOn||!S.W)return 0;
+  const gp=(X_GAP+2*X_BORDER)*S.H/(xCardHeight()-2*X_BORDER);
+  return Math.min(gp,(S.W/S.n)*0.3);
+}
 function equalCuts(){
-  const n=S.n,gp=gapPx(),tw=(S.W-(n-1)*gp)/n;S.cuts=[];
+  S.cuts=[];const n=S.n,gp=gapPx(),tw=(S.W-(n-1)*gp)/n;
   for(let i=1;i<n;i++)S.cuts.push((i*tw+(i-1)*gp+gp/2)/S.W);
   S.sel=-1;
 }
@@ -438,6 +456,8 @@ function draw(){
     ctx.fillStyle="#fff";ctx.fillText(s,x+w/2,y+h/2+fs*.04);
   });
   $("#outInfo").textContent=t("out",S.n,S.H);
+  const wide=G.p.map((p,i)=>p.w/S.H>X_AMAX?i+1:0).filter(Boolean);
+  $("#cropWarn").hidden=!wide.length;if(wide.length)$("#cropWarn").textContent=t("cropWarn",wide.join(", "));
   $("#gapNote").textContent=S.gapOn?t("gapOn",Math.max(1,Math.round(G.gp))):t("gapOff");
   drawPost(G);
 }
