@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TileSplit – X投稿用 画像分割ツール</title>
+<style>
+:root{color-scheme:light;
+  --blue:#1d9bf0;--blue-d:#1a8cd8;--blue-soft:#e8f5fd;
+  --ink:#0f1419;--sub:#536471;--line:#eff3f4;--edge:#cfd9de;--soft:#f7f9f9;--bg:#fff;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Sans","Noto Sans JP","PingFang SC","Malgun Gothic",sans-serif}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+.app{max-width:600px;margin:0 auto;min-height:100vh;border-left:1px solid var(--line);border-right:1px solid var(--line)}
+@media (max-width:600px){.app{border:0}}
+
+/* header */
+.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(255,255,255,.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.brand{font-weight:800;font-size:20px;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+.brand i{width:22px;height:22px;display:grid;grid-template-columns:1fr 1fr;gap:2px}
+.brand i b{background:var(--blue);border-radius:3px}
+.langsel{appearance:none;-webkit-appearance:none;border:1px solid var(--edge);border-radius:999px;padding:5px 30px 5px 14px;font-size:14px;font-weight:600;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23536471' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 12px center}
+.lead{padding:4px 16px 16px;border-bottom:1px solid var(--line)}
+.lead h1{font-size:15px;font-weight:400;color:var(--sub);margin:0}
+.lead .priv{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:13px;color:var(--sub)}
+.lead .priv svg{flex:none}
+.lead a{color:var(--blue);text-decoration:none}
+
+/* sections */
+section{padding:16px;border-bottom:1px solid var(--line)}
+.label{font-size:13px;font-weight:700;color:var(--sub);margin:0 0 10px}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.spread{display:flex;align-items:center;justify-content:space-between;gap:12px}
+
+/* upload */
+.drop{border:1px dashed var(--edge);border-radius:16px;padding:44px 16px;text-align:center;cursor:pointer;transition:background .15s,border-color .15s}
+.drop:hover,.drop.over{background:var(--blue-soft);border-color:var(--blue)}
+.drop .ic{width:48px;height:48px;border-radius:50%;background:var(--blue-soft);display:grid;place-items:center;margin:0 auto 12px}
+.drop strong{display:block;font-size:17px}
+.drop span{font-size:14px;color:var(--sub)}
+.drop.mini{padding:10px;border-style:solid;border-color:var(--edge);border-radius:999px}
+.drop.mini .ic,.drop.mini span{display:none}
+.drop.mini strong{font-size:14px;color:var(--blue)}
+
+/* stage */
+.stagebox{background:var(--soft);border-radius:16px;overflow:hidden;display:flex;justify-content:center}
+#stage{display:block;touch-action:none;cursor:grab;outline:none}
+#stage.drag{cursor:grabbing}
+.tools{display:flex;align-items:center;gap:10px;margin-top:12px}
+.tools .zoom{flex:1;display:flex;align-items:center;gap:8px;min-width:0}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;background:var(--line);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--blue);border:0}
+input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--blue);border:0}
+.ib{width:34px;height:34px;border-radius:50%;border:0;background:transparent;display:grid;place-items:center;color:var(--ink);user-select:none;-webkit-user-select:none;touch-action:manipulation;flex:none}
+.ib:hover{background:var(--blue-soft);color:var(--blue)}
+.ib:active{background:#d2ebfc}
+.nudge{display:flex;gap:2px}
+.meta{font-size:13px;color:var(--sub);margin-top:8px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--edge);background:#fff;border-radius:999px;padding:6px 16px;font-size:14px;font-weight:700;min-width:48px;transition:background .12s}
+.chip:hover{background:var(--soft)}
+.chip.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.numin{width:104px;background:#fff;color:var(--ink);-webkit-appearance:none;appearance:none;border:1px solid var(--edge);border-radius:999px;padding:6px 12px;font-size:14px;font-weight:700;text-align:center;outline:none}
+.numin::placeholder{font-weight:600;color:var(--sub)}
+.numin:focus{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue)}
+.numin.on{border-color:var(--blue);color:var(--blue)}
+.note{font-size:13px;color:var(--sub);margin:8px 0 0}
+.note.warn{color:#f4212e}
+
+/* segmented */
+.seg{display:flex;border:1px solid var(--edge);border-radius:999px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:transparent;border-radius:999px;padding:7px 0;font-weight:700;font-size:14px;color:var(--sub)}
+.seg button.on{background:var(--ink);color:#fff}
+.seg button:disabled{opacity:.35;cursor:not-allowed}
+
+/* toggle */
+.tg{position:relative;width:44px;height:24px;flex:none}
+.tg input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer;z-index:1}
+.tg i{position:absolute;inset:0;border-radius:999px;background:var(--edge);transition:.15s}
+.tg i::after{content:"";position:absolute;width:20px;height:20px;top:2px;left:2px;border-radius:50%;background:#fff;transition:.15s}
+.tg input:checked+i{background:var(--blue)}
+.tg input:checked+i::after{transform:translateX(20px)}
+.ttl{font-weight:700;font-size:15px}
+
+/* post preview */
+.post{display:flex;width:fit-content;max-width:100%;gap:2px;border:1px solid var(--edge);border-radius:16px;overflow-x:auto;overflow-y:hidden;background:#fff;scroll-snap-type:x proximity;scrollbar-width:thin}
+.post .cell{position:relative;flex:none;background:var(--soft);scroll-snap-align:start}
+.post canvas{display:block;width:100%;height:100%}
+.post .n{position:absolute;left:6px;top:6px;background:rgba(15,20,25,.75);color:#fff;font-size:11px;font-weight:700;border-radius:4px;padding:0 5px;line-height:17px}
+
+/* buttons */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:44px;border-radius:999px;font-weight:700;font-size:15px;border:1px solid var(--edge);background:#fff}
+.btn:hover{background:var(--soft)}
+.btn.pri{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.pri:hover{background:var(--blue-d)}
+.btn.dark{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.dark:hover{background:#272c30}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.status{font-size:13px;color:var(--sub);margin-top:10px;min-height:1.2em;text-align:center}
+.status.err{color:#f4212e}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px;margin-top:12px}
+.th{position:relative;border:0;padding:0;border-radius:8px;overflow:hidden;background:var(--soft);aspect-ratio:1}
+.th img{width:100%;height:100%;object-fit:cover;display:block}
+.th .n{position:absolute;left:4px;top:4px;background:rgba(15,20,25,.75);color:#fff;font-size:10px;font-weight:700;border-radius:4px;padding:0 4px;line-height:15px}
+.th.done::after{content:"";position:absolute;right:4px;bottom:4px;width:16px;height:16px;border-radius:50%;background:var(--blue) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='8'%3E%3Cpath d='M1 4l3 3 5-6' fill='none' stroke='%23fff' stroke-width='1.8'/%3E%3C/svg%3E") no-repeat center}
+
+/* privacy */
+.privacy h2{font-size:15px;margin:0 0 8px}
+.privacy ul{margin:0;padding:0;list-style:none;display:grid;gap:6px}
+.privacy li{font-size:14px;color:var(--sub);padding-left:22px;position:relative}
+.privacy li::before{content:"";position:absolute;left:2px;top:7px;width:10px;height:6px;border-left:2px solid var(--blue);border-bottom:2px solid var(--blue);transform:rotate(-45deg)}
+.foot{padding:16px;font-size:12px;color:var(--sub)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="brand"><i><b></b><b></b><b></b><b></b></i>TileSplit</div>
+    <select class="langsel" id="lang" aria-label="Language"></select>
+  </div>
+
+  <div class="lead">
+    <h1 data-i18n="sub"></h1>
+    <div class="priv">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#536471" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+      <span data-i18n="privShort"></span> <a href="#privacy" data-i18n="more"></a>
+    </div>
+  </div>
+
+  <section>
+    <div id="drop" class="drop" tabindex="0" role="button">
+      <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1d9bf0" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg></div>
+      <strong data-i18n="upload"></strong>
+      <span data-i18n="uploadSub"></span>
+      <input id="file" type="file" accept="image/*" hidden>
+    </div>
+  </section>
+
+  <div id="editor" hidden>
+    <section>
+      <div class="stagebox" id="stageWrap"><canvas id="stage" tabindex="0"></canvas></div>
+      <div class="tools">
+        <div class="meta" style="margin:0;flex:1"><span data-i18n="hint"></span></div>
+        <div class="nudge">
+          <button class="ib" data-dx="-1" aria-label="left"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 5l-7 7 7 7"/></svg></button>
+          <button class="ib" data-dx="1" aria-label="right"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 5l7 7-7 7"/></svg></button>
+          <button class="ib" id="resetBtn" aria-label="reset"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 12a8 8 0 1 0 2.5-5.8"/><path d="M4 4v4h4"/></svg></button>
+        </div>
+      </div>
+      <div class="meta"><span id="outInfo"></span></div>
+    </section>
+  </div>
+
+  <section>
+    <p class="label" data-i18n="count"></p>
+    <div class="chips" id="presets">
+      <button class="chip" data-n="2">2</button><button class="chip" data-n="4">4</button><button class="chip" data-n="8">8</button><button class="chip" data-n="20">20</button>
+      <input id="count" class="numin" type="number" min="2" max="100" inputmode="numeric" aria-label="count">
+    </div>
+    <p class="note warn" id="over20" hidden data-i18n="over20"></p>
+  </section>
+
+
+  <section>
+    <div class="spread">
+      <div><div class="ttl" data-i18n="gap"></div><div class="note" style="margin:2px 0 0" id="gapNote"></div></div>
+      <label class="tg"><input id="gapOn" type="checkbox" checked aria-label="gap"><i></i></label>
+    </div>
+  </section>
+
+  <section>
+    <p class="label" data-i18n="format"></p>
+    <div class="seg" id="fmt">
+      <button data-f="png">PNG</button><button data-f="jpg">JPG</button><button data-f="webp" id="webpBtn">WebP</button>
+    </div>
+    <p class="note" id="fmtNote"></p>
+  </section>
+
+  <section id="postSec" hidden>
+    <p class="label" data-i18n="postPreview"></p>
+    <div class="post" id="post"></div>
+  </section>
+
+  <section>
+    <button class="btn pri" id="genBtn" disabled data-i18n="create"></button>
+    <div id="saveArea" hidden>
+      <div class="two">
+        <button class="btn dark" id="phoneBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg><span data-i18n="savePhone"></span></button>
+        <button class="btn" id="zipBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg><span data-i18n="saveZip"></span></button>
+      </div>
+      <p class="note" style="text-align:center" data-i18n="phoneNote"></p>
+      <div class="thumbs" id="thumbs"></div>
+    </div>
+    <div class="status" id="status"></div>
+  </section>
+
+  <section class="privacy" id="privacy">
+    <h2 data-i18n="privTitle"></h2>
+    <ul><li data-i18n="safe1"></li><li data-i18n="safe2"></li><li data-i18n="safe3"></li><li data-i18n="safe4"></li></ul>
+  </section>
+  <div class="foot" data-i18n="foot"></div>
+</div>
+
+<script>
+"use strict";
+/* ============ i18n ============ */
+const LANGS=[["ja","日本語"],["en","English"],["zh-CN","简体中文"],["zh-TW","繁體中文"],["ko","한국어"],["es","Español"],["fr","Français"],["pt","Português"]];
+const I18N={
+ja:{other:"数を入力",sub:"X投稿用の画像分割ツール。1枚の画像を最大20枚に分けて、TLでつながって見えるように書き出します。",privShort:"画像はサーバーに送信されません。",more:"詳しく",
+upload:"画像を選択",uploadSub:"またはドラッグ＆ドロップ・貼り付け",change:"画像を変更",hint:"分割線をドラッグして位置を調整。選んだ線は ← → で1pxずつ動かせます",
+count:"分割数",over20:"Xに一度に投稿できるのは20枚までです。",
+gap:"TLの隙間を考慮する",gapOn:"画像の間の隙間（約{0}px）を自動で計算して切り落とします",gapOff:"隙間を考慮せず、そのまま分割します",
+format:"保存形式",png:"劣化なし。イラスト・文字向き。容量は大きめ。",jpg:"容量が小さく、どこでも開ける。写真向き。透過は白になります。",webp:"PNGに近い画質で小さい容量。透過対応。古いアプリでは開けないことも。",webpNo:"このブラウザはWebPの書き出しに対応していません。",
+postPreview:"投稿イメージ",orderNote:"番号順に選んで投稿",create:"分割画像を作成",savePhone:"スマホに保存",saveZip:"ZIPで保存",
+phoneNote:"1枚ずつ番号順に保存するので、写真アプリでも順番どおりに並びます。サムネイルをタップすると1枚だけ保存できます。",
+stale:"設定が変わりました。もう一度作成してください。",making:"作成中… {0}/{1}",made:"{0}枚を作成しました（合計 {1}）",saving:"保存中… {0}/{1}",saved:"{0}枚を保存しました",savedOne:"保存しました：{0}",zipSaved:"ZIPを保存しました（{0}）",zipMaking:"ZIPを作成中…",declined:"保存をキャンセルしました",saveErr:"保存できませんでした（{0}）",loadErr:"この画像は読み込めませんでした。PNGやJPGでお試しください。",
+out:"{0}枚 ・ 高さ {1}px",
+privTitle:"プライバシーと安全性",safe1:"画像の読み込み・分割・書き出しは、すべてお使いの端末のブラウザ内で行われます。",safe2:"画像がサーバーにアップロード・保存されることはありません。",safe3:"画像がAIの学習などに利用されることは一切ありません。",safe4:"外部のライブラリ・フォント・解析ツールは読み込んでいません。ページを閉じると画像データは消えます。",
+foot:"TileSplit ・ Xの表示仕様は変更される場合があります。"},
+en:{other:"Custom",sub:"Split one image into up to 20 pieces for an X post, exported so they line up seamlessly on the timeline.",privShort:"Your image is never sent to a server.",more:"Learn more",
+upload:"Choose an image",uploadSub:"or drag & drop / paste",change:"Change image",hint:"Drag a split line to move it. ← → nudges the selected line by 1px",
+count:"Pieces",over20:"X allows up to 20 images per post.",
+gap:"Account for timeline gaps",gapOn:"Automatically cuts out the gap between images (about {0}px)",gapOff:"Splits as-is, ignoring the gaps",
+format:"Format",png:"Lossless. Best for illustrations and text. Larger files.",jpg:"Small and opens anywhere. Best for photos. Transparency becomes white.",webp:"Near-PNG quality at a smaller size. Supports transparency. Some older apps can't open it.",webpNo:"This browser can't export WebP.",
+postPreview:"Post preview",orderNote:"Select in number order",create:"Create images",savePhone:"Save to phone",saveZip:"Save as ZIP",
+phoneNote:"Images are saved one by one in number order, so your Photos app keeps the order. Tap a thumbnail to save just that one.",
+stale:"Settings changed. Create the images again.",making:"Creating… {0}/{1}",made:"Created {0} images ({1} total)",saving:"Saving… {0}/{1}",saved:"Saved {0} images",savedOne:"Saved: {0}",zipSaved:"ZIP saved ({0})",zipMaking:"Building ZIP…",declined:"Saving cancelled",saveErr:"Couldn't save ({0})",loadErr:"Couldn't load this image. Try PNG or JPG.",
+out:"{0} pieces · {1}px tall",
+privTitle:"Privacy & safety",safe1:"Loading, splitting and exporting all happen inside your browser, on your device.",safe2:"Your image is never uploaded to or stored on a server.",safe3:"Your image is never used for AI training or anything else.",safe4:"No external libraries, fonts or analytics are loaded. Closing the page discards your image.",
+foot:"TileSplit · X's display rules may change."},
+"zh-CN":{other:"输入",sub:"X 发帖用图片分割工具。将一张图片分成最多 20 张，在时间线上无缝拼接。",privShort:"图片不会发送到服务器。",more:"了解详情",
+upload:"选择图片",uploadSub:"或拖放 / 粘贴",change:"更换图片",hint:"拖动分割线调整位置。选中的线可用 ← → 每次移动 1px",
+count:"分割数量",over20:"X 每条帖子最多可发 20 张图片。",
+gap:"考虑时间线间隙",gapOn:"自动计算并裁掉图片之间的间隙（约 {0}px）",gapOff:"不考虑间隙，直接分割",
+format:"保存格式",png:"无损。适合插画和文字。文件较大。",jpg:"文件小，兼容性最好。适合照片。透明部分变为白色。",webp:"接近 PNG 的画质，文件更小。支持透明。部分旧应用无法打开。",webpNo:"此浏览器不支持导出 WebP。",
+postPreview:"发帖预览",orderNote:"按编号顺序选择",create:"生成分割图片",savePhone:"保存到手机",saveZip:"保存为 ZIP",
+phoneNote:"按编号顺序逐张保存，相册中也能保持顺序。点击缩略图可单独保存。",
+stale:"设置已更改，请重新生成。",making:"生成中… {0}/{1}",made:"已生成 {0} 张（共 {1}）",saving:"保存中… {0}/{1}",saved:"已保存 {0} 张",savedOne:"已保存：{0}",zipSaved:"ZIP 已保存（{0}）",zipMaking:"正在生成 ZIP…",declined:"已取消保存",saveErr:"无法保存（{0}）",loadErr:"无法读取此图片，请尝试 PNG 或 JPG。",
+out:"{0} 张 · 高 {1}px",
+privTitle:"隐私与安全",safe1:"图片的读取、分割和导出全部在您设备的浏览器内完成。",safe2:"图片不会被上传或保存到服务器。",safe3:"图片绝不会被用于 AI 训练等任何用途。",safe4:"不加载任何外部库、字体或统计工具。关闭页面后图片数据即被清除。",
+foot:"TileSplit · X 的显示规则可能会变更。"},
+"zh-TW":{other:"輸入",sub:"X 發文用圖片分割工具。將一張圖片分成最多 20 張，在時間軸上無縫拼接。",privShort:"圖片不會傳送到伺服器。",more:"了解詳情",
+upload:"選擇圖片",uploadSub:"或拖放 / 貼上",change:"更換圖片",hint:"拖曳分割線調整位置。選取的線可用 ← → 每次移動 1px",
+count:"分割數量",over20:"X 每則貼文最多可發 20 張圖片。",
+gap:"考慮時間軸間隙",gapOn:"自動計算並裁掉圖片之間的間隙（約 {0}px）",gapOff:"不考慮間隙，直接分割",
+format:"儲存格式",png:"無損。適合插畫與文字。檔案較大。",jpg:"檔案小，相容性最佳。適合照片。透明部分會變成白色。",webp:"接近 PNG 的畫質，檔案更小。支援透明。部分舊 App 無法開啟。",webpNo:"此瀏覽器不支援匯出 WebP。",
+postPreview:"貼文預覽",orderNote:"依編號順序選擇",create:"產生分割圖片",savePhone:"儲存到手機",saveZip:"儲存為 ZIP",
+phoneNote:"依編號順序逐張儲存，相簿中也能維持順序。點選縮圖可單獨儲存。",
+stale:"設定已變更，請重新產生。",making:"產生中… {0}/{1}",made:"已產生 {0} 張（共 {1}）",saving:"儲存中… {0}/{1}",saved:"已儲存 {0} 張",savedOne:"已儲存：{0}",zipSaved:"ZIP 已儲存（{0}）",zipMaking:"正在產生 ZIP…",declined:"已取消儲存",saveErr:"無法儲存（{0}）",loadErr:"無法讀取此圖片，請嘗試 PNG 或 JPG。",
+out:"{0} 張 · 高 {1}px",
+privTitle:"隱私與安全",safe1:"圖片的讀取、分割與匯出全部在您裝置的瀏覽器內完成。",safe2:"圖片不會被上傳或儲存到伺服器。",safe3:"圖片絕不會被用於 AI 訓練等任何用途。",safe4:"不載入任何外部函式庫、字型或分析工具。關閉頁面後圖片資料即被清除。",
+foot:"TileSplit · X 的顯示規則可能會變更。"},
+ko:{other:"직접 입력",sub:"X 게시용 이미지 분할 도구. 한 장의 이미지를 최대 20장으로 나눠 타임라인에서 자연스럽게 이어지도록 저장합니다.",privShort:"이미지는 서버로 전송되지 않습니다.",more:"자세히",
+upload:"이미지 선택",uploadSub:"또는 드래그 앤 드롭 / 붙여넣기",change:"이미지 변경",hint:"분할선을 드래그해 위치를 조정하세요. 선택한 선은 ← → 로 1px씩 이동",
+count:"분할 수",over20:"X는 한 게시물에 최대 20장까지 올릴 수 있습니다.",
+gap:"타임라인 간격 고려",gapOn:"이미지 사이 간격(약 {0}px)을 자동 계산해 잘라냅니다",gapOff:"간격을 고려하지 않고 그대로 분할합니다",
+format:"저장 형식",png:"무손실. 일러스트·글자에 적합. 용량이 큰 편.",jpg:"용량이 작고 어디서나 열림. 사진에 적합. 투명 부분은 흰색이 됩니다.",webp:"PNG에 가까운 화질을 더 작은 용량으로. 투명 지원. 일부 오래된 앱에서는 열리지 않을 수 있음.",webpNo:"이 브라우저는 WebP 저장을 지원하지 않습니다.",
+postPreview:"게시 미리보기",orderNote:"번호 순서대로 선택",create:"분할 이미지 만들기",savePhone:"휴대폰에 저장",saveZip:"ZIP으로 저장",
+phoneNote:"번호 순서대로 한 장씩 저장하므로 사진 앱에서도 순서가 유지됩니다. 썸네일을 탭하면 한 장만 저장할 수 있습니다.",
+stale:"설정이 변경되었습니다. 다시 만들어 주세요.",making:"만드는 중… {0}/{1}",made:"{0}장을 만들었습니다 (합계 {1})",saving:"저장 중… {0}/{1}",saved:"{0}장을 저장했습니다",savedOne:"저장했습니다: {0}",zipSaved:"ZIP을 저장했습니다 ({0})",zipMaking:"ZIP 만드는 중…",declined:"저장을 취소했습니다",saveErr:"저장할 수 없습니다 ({0})",loadErr:"이 이미지를 불러올 수 없습니다. PNG나 JPG로 시도해 주세요.",
+out:"{0}장 · 높이 {1}px",
+privTitle:"개인정보 및 안전",safe1:"이미지 불러오기·분할·저장은 모두 기기의 브라우저 안에서 처리됩니다.",safe2:"이미지가 서버에 업로드되거나 저장되지 않습니다.",safe3:"이미지가 AI 학습 등 어떤 용도로도 사용되지 않습니다.",safe4:"외부 라이브러리·폰트·분석 도구를 불러오지 않습니다. 페이지를 닫으면 이미지 데이터가 사라집니다.",
+foot:"TileSplit · X의 표시 사양은 변경될 수 있습니다."},
+es:{other:"Escribir",sub:"Divide una imagen en hasta 20 piezas para un post de X, alineadas sin cortes en la cronología.",privShort:"Tu imagen nunca se envía a un servidor.",more:"Más info",
+upload:"Elegir imagen",uploadSub:"o arrastra y suelta / pega",change:"Cambiar imagen",hint:"Arrastra una línea de corte para moverla. ← → mueve 1px la línea seleccionada",
+count:"Piezas",over20:"X permite hasta 20 imágenes por post.",
+gap:"Tener en cuenta los espacios",gapOn:"Calcula y recorta automáticamente el espacio entre imágenes (unos {0}px)",gapOff:"Divide tal cual, sin tener en cuenta los espacios",
+format:"Formato",png:"Sin pérdida. Ideal para ilustraciones y texto. Archivos grandes.",jpg:"Ligero y compatible con todo. Ideal para fotos. La transparencia pasa a blanco.",webp:"Calidad casi PNG con menos peso. Admite transparencia. Algunas apps antiguas no lo abren.",webpNo:"Este navegador no puede exportar WebP.",
+postPreview:"Vista del post",orderNote:"Selecciona en orden numérico",create:"Crear imágenes",savePhone:"Guardar en el móvil",saveZip:"Guardar en ZIP",
+phoneNote:"Se guardan una a una en orden numérico, así tu galería mantiene el orden. Toca una miniatura para guardar solo esa.",
+stale:"Los ajustes cambiaron. Vuelve a crear las imágenes.",making:"Creando… {0}/{1}",made:"{0} imágenes creadas ({1} en total)",saving:"Guardando… {0}/{1}",saved:"{0} imágenes guardadas",savedOne:"Guardada: {0}",zipSaved:"ZIP guardado ({0})",zipMaking:"Creando ZIP…",declined:"Guardado cancelado",saveErr:"No se pudo guardar ({0})",loadErr:"No se pudo cargar la imagen. Prueba con PNG o JPG.",
+out:"{0} piezas · {1}px de alto",
+privTitle:"Privacidad y seguridad",safe1:"La carga, división y exportación ocurren dentro de tu navegador, en tu dispositivo.",safe2:"Tu imagen nunca se sube ni se guarda en un servidor.",safe3:"Tu imagen nunca se usa para entrenar IA ni para nada más.",safe4:"No se cargan librerías, fuentes ni analíticas externas. Al cerrar la página, la imagen se descarta.",
+foot:"TileSplit · Las reglas de visualización de X pueden cambiar."},
+fr:{other:"Saisir",sub:"Découpez une image en jusqu'à 20 morceaux pour un post X, parfaitement alignés dans le fil.",privShort:"Votre image n'est jamais envoyée à un serveur.",more:"En savoir plus",
+upload:"Choisir une image",uploadSub:"ou glisser-déposer / coller",change:"Changer d'image",hint:"Faites glisser une ligne de découpe. ← → déplace la ligne sélectionnée de 1px",
+count:"Morceaux",over20:"X autorise 20 images maximum par post.",
+gap:"Tenir compte des espaces du fil",gapOn:"Calcule et retire automatiquement l'espace entre les images (env. {0}px)",gapOff:"Découpe telle quelle, sans tenir compte des espaces",
+format:"Format",png:"Sans perte. Idéal pour illustrations et texte. Fichiers lourds.",jpg:"Léger et universel. Idéal pour les photos. La transparence devient blanche.",webp:"Qualité proche du PNG, plus léger. Gère la transparence. Certaines vieilles apps ne l'ouvrent pas.",webpNo:"Ce navigateur ne peut pas exporter en WebP.",
+postPreview:"Aperçu du post",orderNote:"Sélectionnez dans l'ordre",create:"Créer les images",savePhone:"Enregistrer sur mobile",saveZip:"Enregistrer en ZIP",
+phoneNote:"Les images sont enregistrées une par une dans l'ordre, votre galerie garde donc l'ordre. Touchez une vignette pour n'enregistrer que celle-ci.",
+stale:"Réglages modifiés. Recréez les images.",making:"Création… {0}/{1}",made:"{0} images créées ({1} au total)",saving:"Enregistrement… {0}/{1}",saved:"{0} images enregistrées",savedOne:"Enregistrée : {0}",zipSaved:"ZIP enregistré ({0})",zipMaking:"Création du ZIP…",declined:"Enregistrement annulé",saveErr:"Échec de l'enregistrement ({0})",loadErr:"Impossible de charger cette image. Essayez PNG ou JPG.",
+out:"{0} morceaux · {1}px de haut",
+privTitle:"Confidentialité et sécurité",safe1:"Le chargement, le découpage et l'export se font dans votre navigateur, sur votre appareil.",safe2:"Votre image n'est jamais envoyée ni stockée sur un serveur.",safe3:"Votre image n'est jamais utilisée pour entraîner une IA ni pour quoi que ce soit d'autre.",safe4:"Aucune bibliothèque, police ou outil d'analyse externe n'est chargé. Fermer la page efface l'image.",
+foot:"TileSplit · Les règles d'affichage de X peuvent changer."},
+pt:{other:"Digitar",sub:"Divida uma imagem em até 20 partes para um post no X, alinhadas sem emendas na timeline.",privShort:"Sua imagem nunca é enviada a um servidor.",more:"Saiba mais",
+upload:"Escolher imagem",uploadSub:"ou arraste e solte / cole",change:"Trocar imagem",hint:"Arraste uma linha de corte para movê-la. ← → move a linha selecionada 1px",
+count:"Partes",over20:"O X permite até 20 imagens por post.",
+gap:"Considerar espaços da timeline",gapOn:"Calcula e remove automaticamente o espaço entre as imagens (cerca de {0}px)",gapOff:"Divide como está, sem considerar os espaços",
+format:"Formato",png:"Sem perdas. Ideal para ilustrações e texto. Arquivos maiores.",jpg:"Leve e abre em qualquer lugar. Ideal para fotos. A transparência vira branco.",webp:"Qualidade próxima ao PNG com menos peso. Suporta transparência. Alguns apps antigos não abrem.",webpNo:"Este navegador não exporta WebP.",
+postPreview:"Prévia do post",orderNote:"Selecione na ordem numérica",create:"Criar imagens",savePhone:"Salvar no celular",saveZip:"Salvar em ZIP",
+phoneNote:"As imagens são salvas uma a uma na ordem, então sua galeria mantém a sequência. Toque numa miniatura para salvar só ela.",
+stale:"As configurações mudaram. Crie as imagens novamente.",making:"Criando… {0}/{1}",made:"{0} imagens criadas ({1} no total)",saving:"Salvando… {0}/{1}",saved:"{0} imagens salvas",savedOne:"Salva: {0}",zipSaved:"ZIP salvo ({0})",zipMaking:"Criando ZIP…",declined:"Salvamento cancelado",saveErr:"Não foi possível salvar ({0})",loadErr:"Não foi possível carregar a imagem. Tente PNG ou JPG.",
+out:"{0} partes · {1}px de altura",
+privTitle:"Privacidade e segurança",safe1:"Carregar, dividir e exportar acontece dentro do seu navegador, no seu dispositivo.",safe2:"Sua imagem nunca é enviada nem armazenada em um servidor.",safe3:"Sua imagem nunca é usada para treinar IA nem para qualquer outra finalidade.",safe4:"Nenhuma biblioteca, fonte ou ferramenta de análise externa é carregada. Ao fechar a página, a imagem é descartada.",
+foot:"TileSplit · As regras de exibição do X podem mudar."}
+};
+const store={get(k){try{return localStorage.getItem("tilesplit."+k)}catch(e){return null}},set(k,v){try{localStorage.setItem("tilesplit."+k,v)}catch(e){}}};
+function detectLang(){
+  const s=store.get("lang"); if(s&&I18N[s]) return s;
+  for(const l of (navigator.languages||[navigator.language||"en"])){
+    const L=l.toLowerCase();
+    if(L.startsWith("zh")) return /tw|hk|mo|hant/.test(L)?"zh-TW":"zh-CN";
+    const b=L.split("-")[0]; if(I18N[b]) return b;
+  }
+  return "en";
+}
+let lang=detectLang();
+const t=(k,...a)=>{let s=(I18N[lang][k]??I18N.en[k]??k);a.forEach((v,i)=>{s=s.replace("{"+i+"}",v)});return s;};
+const $=s=>document.querySelector(s);
+const langSel=$("#lang");
+LANGS.forEach(([v,n])=>{const o=document.createElement("option");o.value=v;o.textContent=n;langSel.appendChild(o);});
+langSel.addEventListener("change",()=>{lang=langSel.value;store.set("lang",lang);applyI18n();});
+function applyI18n(){
+  document.documentElement.lang=lang; langSel.value=lang;
+  document.querySelectorAll("[data-i18n]").forEach(el=>{el.textContent=t(el.dataset.i18n)});
+  if(S.img) $("#drop strong").textContent=t("change");
+  updateUI();
+}
+
+/* ============ state ============ */
+const S={img:null,W:0,H:0,base:"image",n:+(store.get("n")||4),cols:2,rows:2,manual:false,
+  ratio:"free",gapOn:store.get("gapOn")!=="0",fmt:store.get("fmt")||"png",
+  cuts:[],sel:-1,hover:-1,results:null};
+const WEBP_OK=(()=>{try{const c=document.createElement("canvas");c.width=c.height=1;return c.toDataURL("image/webp").startsWith("data:image/webp")}catch(e){return false}})();
+if(!WEBP_OK&&S.fmt==="webp")S.fmt="png";
+const clamp=(v,a,b)=>Math.min(Math.max(v,a),Math.max(a,b));
+
+/* ============ geometry ============
+   X shows the pieces in one horizontal row at the same height, about 249px wide each with a 2px gap.
+   The gap in source pixels follows from that scale (based on the average piece width).
+   S.cuts holds the centre of each split line as a fraction of the image width (n-1 values). */
+const TL_TILE_W=249, TL_GAP=2;
+function gapPx(){if(!S.gapOn||!S.W)return 0;const g=TL_GAP/TL_TILE_W;return g*S.W/(S.n+(S.n-1)*g);}
+function equalCuts(){
+  const n=S.n,gp=gapPx(),tw=(S.W-(n-1)*gp)/n;S.cuts=[];
+  for(let i=1;i<n;i++)S.cuts.push((i*tw+(i-1)*gp+gp/2)/S.W);
+  S.sel=-1;
+}
+function fixCuts(){
+  const gp=gapPx(),m=Math.max(4,S.W*.01),c=S.cuts.map(f=>f*S.W);
+  for(let i=0;i<c.length;i++){const lo=(i?c[i-1]:-gp/2)+gp+m;if(c[i]<lo)c[i]=lo;}
+  for(let i=c.length-1;i>=0;i--){const hi=(i<c.length-1?c[i+1]:S.W+gp/2)-gp-m;if(c[i]>hi)c[i]=hi;}
+  S.cuts=c.map(x=>x/S.W);
+}
+function pieces(){
+  const gp=gapPx(),c=S.cuts.map(f=>f*S.W),p=[];
+  for(let k=0;k<S.n;k++){const l=k?c[k-1]+gp/2:0,r=k<S.n-1?c[k]-gp/2:S.W;p.push({x:l,w:r-l});}
+  return {gp,c,p};
+}
+
+/* ============ loading ============ */
+function loadFile(f){
+  if(!f)return;
+  const url=URL.createObjectURL(f),im=new Image();
+  im.onload=()=>{
+    S.img=im;S.W=im.naturalWidth;S.H=im.naturalHeight;
+    S.base=sanitize((f.name||"").replace(/\.[^.]+$/,""))||"tilesplit";
+    equalCuts();
+    const d=$("#drop");d.classList.add("mini");d.querySelector("strong").textContent=t("change");
+    $("#editor").hidden=false;$("#postSec").hidden=false;$("#genBtn").disabled=false;
+    clearResults(false);updateUI();
+  };
+  im.onerror=()=>{URL.revokeObjectURL(url);setStatus(t("loadErr"),true);};
+  im.src=url;
+}
+const drop=$("#drop"),fileIn=$("#file");
+drop.addEventListener("click",()=>fileIn.click());
+drop.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();fileIn.click();}});
+fileIn.addEventListener("change",()=>{loadFile(fileIn.files[0]);fileIn.value="";});
+["dragenter","dragover"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("over")}));
+["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,()=>drop.classList.remove("over")));
+window.addEventListener("dragover",e=>e.preventDefault());
+window.addEventListener("drop",e=>{e.preventDefault();if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0]);});
+window.addEventListener("paste",e=>{const it=[...(e.clipboardData?.items||[])].find(i=>i.type.startsWith("image/"));if(it)loadFile(it.getAsFile());});
+
+/* ============ preview ============ */
+const stage=$("#stage");let view={k:1};
+let raf=0;const schedule=()=>{if(!raf)raf=requestAnimationFrame(()=>{raf=0;draw();});};
+function draw(){
+  if(!S.img)return;
+  const wrap=$("#stageWrap"),maxW=wrap.clientWidth||568,maxH=Math.min(innerHeight*.6,600);
+  let dw=maxW,dh=dw*S.H/S.W;if(dh>maxH){dh=maxH;dw=dh*S.W/S.H;}
+  const dpr=devicePixelRatio||1;
+  stage.width=Math.round(dw*dpr);stage.height=Math.round(dh*dpr);stage.style.width=dw+"px";stage.style.height=dh+"px";
+  view.k=S.W/dw;const k=view.k;
+  const ctx=stage.getContext("2d");ctx.setTransform(dpr/k,0,0,dpr/k,0,0);ctx.imageSmoothingQuality="high";
+  ctx.drawImage(S.img,0,0);
+  const G=pieces();
+  // gap bands (cut out) and split lines with grab handles
+  G.c.forEach((x,i)=>{
+    const on=i===S.sel||i===S.hover;
+    if(G.gp>0){ctx.fillStyle="rgba(255,255,255,.55)";ctx.fillRect(x-G.gp/2,0,G.gp,S.H);}
+    const lw=(on?3:2)*k;ctx.fillStyle="#1d9bf0";ctx.fillRect(x-lw/2,0,lw,S.H);
+    const r=(on?13:11)*k,cy=S.H/2;
+    ctx.beginPath();ctx.arc(x,cy,r,0,Math.PI*2);ctx.fillStyle=i===S.sel?"#1d9bf0":"#fff";ctx.fill();
+    ctx.lineWidth=2*k;ctx.strokeStyle="#1d9bf0";ctx.stroke();
+    ctx.strokeStyle=i===S.sel?"#fff":"#1d9bf0";ctx.lineWidth=1.8*k;ctx.beginPath();
+    ctx.moveTo(x-3*k,cy-4*k);ctx.lineTo(x-7*k,cy);ctx.lineTo(x-3*k,cy+4*k);
+    ctx.moveTo(x+3*k,cy-4*k);ctx.lineTo(x+7*k,cy);ctx.lineTo(x+3*k,cy+4*k);ctx.stroke();
+  });
+  // numbers
+  const fs=11*k;ctx.font=`700 ${fs}px -apple-system,system-ui,sans-serif`;ctx.textAlign="center";ctx.textBaseline="middle";
+  G.p.forEach((p,i)=>{
+    const s=String(i+1),w=Math.max(fs*1.5,ctx.measureText(s).width+fs*.8),h=fs*1.4;
+    if(p.w<w+8*k)return;
+    const x=p.x+5*k,y=5*k;
+    ctx.fillStyle="rgba(15,20,25,.75)";rr(ctx,x,y,w,h,3*k);ctx.fill();
+    ctx.fillStyle="#fff";ctx.fillText(s,x+w/2,y+h/2+fs*.04);
+  });
+  $("#outInfo").textContent=t("out",S.n,S.H);
+  $("#gapNote").textContent=S.gapOn?t("gapOn",Math.max(1,Math.round(G.gp))):t("gapOff");
+  drawPost(G);
+}
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+function drawPost(G){
+  const box=$("#post"),n=S.n;
+  if(box.children.length!==n){box.innerHTML="";for(let i=0;i<n;i++){const d=document.createElement("div");d.className="cell";d.innerHTML=`<canvas></canvas><span class="n">${i+1}</span>`;box.appendChild(d);}}
+  // same height for every piece; fit the row in the width when possible, otherwise scroll sideways
+  const sumW=G.p.reduce((s,p)=>s+p.w,0),avail=box.parentElement.clientWidth-34,maxH=Math.min(300,innerHeight*.4);
+  let ch=Math.min(maxH,(avail-(n-1)*2)*S.H/sumW);
+  if(ch*sumW/S.H/n<56)ch=Math.min(maxH,56*n*S.H/sumW,160*S.H/(sumW/n));
+  const dpr=Math.min(2,devicePixelRatio||1);
+  G.p.forEach((p,i)=>{
+    const cw=ch*p.w/S.H,cell=box.children[i];cell.style.width=cw+"px";cell.style.height=ch+"px";
+    const pw=Math.max(1,Math.round(cw*dpr)),ph=Math.max(1,Math.round(ch*dpr)),cv=cell.firstChild;
+    if(cv.width!==pw||cv.height!==ph){cv.width=pw;cv.height=ph;}
+    const x=cv.getContext("2d");x.imageSmoothingQuality="high";x.clearRect(0,0,pw,ph);
+    x.drawImage(S.img,p.x,0,p.w,S.H,0,0,pw,ph);
+  });
+}
+// grab a split line and drag it
+function srcX(e){const r=stage.getBoundingClientRect();return (e.clientX-r.left)*view.k;}
+function hitLine(e){
+  const x=srcX(e),tol=(e.pointerType==="touch"?22:12)*view.k;let best=-1,bd=1e9;
+  S.cuts.forEach((f,i)=>{const d=Math.abs(f*S.W-x);if(d<bd){bd=d;best=i;}});
+  return bd<=tol?best:-1;
+}
+let drag=null;
+stage.addEventListener("pointerdown",e=>{
+  const i=hitLine(e);stage.focus({preventScroll:true});
+  if(i<0){if(S.sel!==-1){S.sel=-1;schedule();}return;}
+  e.preventDefault();stage.setPointerCapture(e.pointerId);
+  drag={i,off:S.cuts[i]*S.W-srcX(e)};S.sel=i;stage.classList.add("drag");schedule();
+});
+stage.addEventListener("pointermove",e=>{
+  if(drag){S.cuts[drag.i]=(srcX(e)+drag.off)/S.W;fixCuts();changed();return;}
+  if(e.pointerType==="mouse"){const h=hitLine(e);if(h!==S.hover){S.hover=h;stage.style.cursor=h>=0?"col-resize":"default";schedule();}}
+});
+const endDrag=()=>{drag=null;stage.classList.remove("drag");};
+["pointerup","pointercancel","lostpointercapture"].forEach(ev=>stage.addEventListener(ev,endDrag));
+stage.addEventListener("pointerleave",()=>{if(S.hover!==-1){S.hover=-1;schedule();}});
+function nudge(d){
+  if(!S.cuts.length)return;
+  if(S.sel<0)S.sel=0;
+  S.cuts[S.sel]+=d/S.W;fixCuts();changed();
+}
+stage.addEventListener("keydown",e=>{
+  if(e.key==="ArrowLeft"||e.key==="ArrowRight"){e.preventDefault();nudge((e.key==="ArrowLeft"?-1:1)*(e.shiftKey?10:1));}
+  else if(e.key==="Tab"&&S.cuts.length>1&&S.sel>=0){const nx=S.sel+(e.shiftKey?-1:1);if(nx>=0&&nx<S.cuts.length){e.preventDefault();S.sel=nx;schedule();}}
+});
+// nudge buttons: 1px per tap, accelerates while held
+document.querySelectorAll(".nudge [data-dx]").forEach(b=>{
+  let tm=null,iv=null,cnt=0;
+  const go=()=>{const s=cnt>25?10:cnt>10?4:1;cnt++;nudge((+b.dataset.dx)*s);};
+  const stop=()=>{clearTimeout(tm);clearInterval(iv);tm=iv=null;cnt=0;};
+  b.addEventListener("pointerdown",e=>{e.preventDefault();go();tm=setTimeout(()=>{iv=setInterval(go,45)},320);});
+  ["pointerup","pointerleave","pointercancel"].forEach(ev=>b.addEventListener(ev,stop));
+});
+$("#resetBtn").addEventListener("click",()=>{equalCuts();changed();});
+
+/* ============ settings ============ */
+function updateUI(){
+  document.querySelectorAll("#presets .chip").forEach(b=>b.classList.toggle("on",+b.dataset.n===S.n));
+  const ci=$("#count"),isP=[2,4,8,20].includes(S.n);if(document.activeElement!==ci)ci.value=isP?"":S.n;ci.placeholder=t("other");ci.classList.toggle("on",!isP);
+  $("#over20").hidden=S.n<=20;
+  $("#gapOn").checked=S.gapOn;
+  if(!S.img)$("#gapNote").textContent=S.gapOn?t("gapOn",2):t("gapOff");
+  document.querySelectorAll("#fmt button").forEach(b=>b.classList.toggle("on",b.dataset.f===S.fmt));
+  $("#webpBtn").disabled=!WEBP_OK;
+  $("#fmtNote").textContent=t(S.fmt)+(WEBP_OK?"":" "+t("webpNo"));
+  schedule();
+}
+function setN(n){S.n=Math.round(clamp(+n||2,2,100));store.set("n",S.n);if(S.img)equalCuts();changed(true);}
+$("#presets").addEventListener("click",e=>{const b=e.target.closest(".chip");if(b)setN(b.dataset.n);});
+$("#count").addEventListener("change",e=>setN(e.target.value));
+$("#gapOn").addEventListener("change",e=>{S.gapOn=e.target.checked;store.set("gapOn",S.gapOn?"1":"0");if(S.img)fixCuts();changed(true);});
+$("#fmt").addEventListener("click",e=>{const b=e.target.closest("button");if(!b||b.disabled)return;S.fmt=b.dataset.f;store.set("fmt",S.fmt);changed(true);});
+addEventListener("resize",schedule);
+function changed(settings){if(S.results)clearResults(true);if(settings)updateUI();else schedule();}
+
+/* ============ names ============ */
+function sanitize(s){return (s||"").replace(/[\\/:*?"<>|\u0000-\u001f]+/g,"_").replace(/\s+/g,"_").replace(/^\.+/,"").slice(0,60);}
+const EXT={png:"png",jpg:"jpg",webp:"webp"},MIME={png:"image/png",jpg:"image/jpeg",webp:"image/webp"};
+// Auto: <original name>_<number>.<ext>, zero-padded so files sort in posting order everywhere
+function fname(i,n){return `${S.base}_${String(i).padStart(Math.max(2,String(n).length),"0")}.${EXT[S.fmt]}`;}
+
+/* ============ export ============ */
+const fmtSize=b=>b>1048576?(b/1048576).toFixed(1)+" MB":Math.max(1,Math.round(b/1024))+" KB";
+function setStatus(m,err){const s=$("#status");s.textContent=m||"";s.classList.toggle("err",!!err);}
+function clearResults(stale){
+  if(S.results)S.results.forEach(r=>URL.revokeObjectURL(r.url));
+  S.results=null;$("#saveArea").hidden=true;$("#thumbs").innerHTML="";setStatus(stale?t("stale"):"");
+}
+$("#genBtn").addEventListener("click",async()=>{
+  if(!S.img)return;const btn=$("#genBtn");btn.disabled=true;
+  const G=pieces(),n=S.n,oh=S.H,cv=document.createElement("canvas"),ctx=cv.getContext("2d");
+  const out=[];
+  for(let i=0;i<n;i++){
+    const p=G.p[i],ow=Math.max(1,Math.round(p.w));btn.textContent=t("making",i+1,n);
+    cv.width=ow;cv.height=oh;ctx.imageSmoothingQuality="high";
+    if(S.fmt==="jpg"){ctx.fillStyle="#fff";ctx.fillRect(0,0,ow,oh);}
+    ctx.drawImage(S.img,p.x,0,p.w,S.H,0,0,ow,oh);
+    const blob=await new Promise(res=>cv.toBlob(res,MIME[S.fmt],.92));
+    out.push({blob,name:fname(i+1,n),url:URL.createObjectURL(blob),done:false});
+  }
+  S.results=out;renderThumbs();$("#saveArea").hidden=false;
+  btn.textContent=t("create");btn.disabled=false;
+  setStatus(t("made",n,fmtSize(out.reduce((s,r)=>s+r.blob.size,0))));
+});
+function renderThumbs(){
+  const box=$("#thumbs");box.innerHTML="";
+  S.results.forEach((r,i)=>{
+    const b=document.createElement("button");b.className="th"+(r.done?" done":"");b.title=r.name;
+    b.innerHTML=`<img alt="${r.name}" src="${r.url}"><span class="n">${i+1}</span>`;
+    b.onclick=async()=>{const res=await saveFile(r.name,r.blob);if(res==="ok"){r.done=true;b.classList.add("done");setStatus(t("savedOne",r.name));}else setStatus(res==="declined"?t("declined"):t("saveErr",res),res!=="declined");};
+    box.appendChild(b);
+  });
+}
+
+/* ============ saving ============ */
+let DL=null,dlTried=false;
+async function initDL(){if(dlTried)return;dlTried=true;try{if(window.claude&&typeof window.claude.use==="function")DL=await window.claude.use("downloads");}catch(e){DL=null;}}
+addEventListener("load",()=>{initDL();});
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function saveFile(name,blob){
+  await initDL();
+  if(DL){for(let a=0;a<3;a++){try{await DL.save({filename:name,data:blob});return "ok";}catch(e){const c=(e&&e.code)||"unavailable";if(c==="rate_limited"){await sleep(1200);continue;}return c;}}return "rate_limited";}
+  try{const a=document.createElement("a"),u=URL.createObjectURL(blob);a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),5000);return "ok";}catch(e){return "unavailable";}
+}
+$("#phoneBtn").addEventListener("click",async()=>{
+  if(!S.results)return;await initDL();const list=S.results;
+  if(!DL&&navigator.canShare){
+    const files=list.map(r=>new File([r.blob],r.name,{type:r.blob.type}));
+    if(navigator.canShare({files})){try{await navigator.share({files});list.forEach(r=>r.done=true);renderThumbs();setStatus(t("saved",files.length));return;}catch(e){if(e.name==="AbortError"){setStatus(t("declined"));return;}}}
+  }
+  const btn=$("#phoneBtn");btn.disabled=true;
+  for(let i=0;i<list.length;i++){
+    if(list[i].done)continue;setStatus(t("saving",i+1,list.length));
+    const res=await saveFile(list[i].name,list[i].blob);
+    if(res!=="ok"){btn.disabled=false;setStatus(res==="declined"?t("declined"):t("saveErr",res),res!=="declined");return;}
+    list[i].done=true;renderThumbs();await sleep(DL?250:700);
+  }
+  btn.disabled=false;setStatus(t("saved",list.length));
+});
+$("#zipBtn").addEventListener("click",async()=>{
+  if(!S.results)return;setStatus(t("zipMaking"));
+  const zip=await makeZip(S.results);
+  const res=await saveFile(`${S.base}_${S.results.length}pcs.zip`,zip);
+  setStatus(res==="ok"?t("zipSaved",fmtSize(zip.size)):res==="declined"?t("declined"):t("saveErr",res),res!=="ok"&&res!=="declined");
+});
+
+/* ============ ZIP (stored, no compression – images are already compressed) ============ */
+const CRC=(()=>{const tb=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;tb[n]=c>>>0;}return tb;})();
+const crc32=u=>{let c=0xFFFFFFFF;for(let i=0;i<u.length;i++)c=CRC[(c^u[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0;};
+async function makeZip(files){
+  const enc=new TextEncoder(),parts=[],cen=[];let off=0;const d=new Date();
+  const dt=(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1),dd=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate();
+  for(const f of files){
+    const data=new Uint8Array(await f.blob.arrayBuffer()),nm=enc.encode(f.name),crc=crc32(data);
+    const l=new DataView(new ArrayBuffer(30));
+    l.setUint32(0,0x04034b50,true);l.setUint16(4,20,true);l.setUint16(6,0x0800,true);l.setUint16(10,dt,true);l.setUint16(12,dd,true);
+    l.setUint32(14,crc,true);l.setUint32(18,data.length,true);l.setUint32(22,data.length,true);l.setUint16(26,nm.length,true);
+    parts.push(l.buffer,nm,data);
+    const c=new DataView(new ArrayBuffer(46));
+    c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);c.setUint16(8,0x0800,true);c.setUint16(12,dt,true);c.setUint16(14,dd,true);
+    c.setUint32(16,crc,true);c.setUint32(20,data.length,true);c.setUint32(24,data.length,true);c.setUint16(28,nm.length,true);c.setUint32(42,off,true);
+    cen.push(c.buffer,nm);off+=30+nm.length+data.length;
+  }
+  const cs=cen.reduce((s,p)=>s+p.byteLength,0),e=new DataView(new ArrayBuffer(22));
+  e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,cs,true);e.setUint32(16,off,true);
+  return new Blob([...parts,...cen,e.buffer],{type:"application/zip"});
+}
+
+equalCuts();applyI18n();
+</script>
+</body>
+</html>
