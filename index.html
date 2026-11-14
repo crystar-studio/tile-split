@@ -4,6 +4,24 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TileSplit – X投稿用 画像分割ツール</title>
+<meta name="description" content="画像をブラウザ内で分割し、X投稿用にPNG・JPG・WebPやZIPで保存。画像のアップロード不要、登録不要の無料ツール。">
+<meta name="theme-color" content="#1d9bf0">
+<link rel="canonical" href="https://crystar-studio.github.io/tile-split/">
+<link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:site_name" content="TileSplit">
+<meta property="og:title" content="TileSplit – X投稿用 画像分割ツール">
+<meta property="og:description" content="1枚の画像を分割して、Xの投稿へ。画像は端末内で処理。登録不要・無料。">
+<meta property="og:url" content="https://crystar-studio.github.io/tile-split/">
+<meta property="og:image" content="https://crystar-studio.github.io/tile-split/assets/ogp.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="TileSplit — Split one image. Create your next X post.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="TileSplit – X投稿用 画像分割ツール">
+<meta name="twitter:description" content="画像を端末内で分割。登録不要・無料。PNG・JPG・WebP・ZIPに対応。">
+<meta name="twitter:image" content="https://crystar-studio.github.io/tile-split/assets/ogp.png">
 <style>
 :root{color-scheme:light;
   --blue:#1d9bf0;--blue-d:#1a8cd8;--blue-soft:#e8f5fd;
@@ -115,6 +133,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 .privacy li{font-size:14px;color:var(--sub);padding-left:22px;position:relative}
 .privacy li::before{content:"";position:absolute;left:2px;top:7px;width:10px;height:6px;border-left:2px solid var(--blue);border-bottom:2px solid var(--blue);transform:rotate(-45deg)}
 .foot{padding:16px;font-size:12px;color:var(--sub)}
+:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -144,7 +163,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 
   <div id="editor" hidden>
     <section>
-      <div class="stagebox" id="stageWrap"><canvas id="stage" tabindex="0"></canvas></div>
+      <div class="stagebox" id="stageWrap"><canvas id="stage" tabindex="0" aria-label="分割位置の調整 / Adjust split lines"></canvas></div>
       <div class="tools">
         <div class="meta" style="margin:0;flex:1"><span data-i18n="hint"></span></div>
         <div class="nudge">
@@ -197,14 +216,14 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
       <p class="note" style="text-align:center" data-i18n="phoneNote"></p>
       <div class="thumbs" id="thumbs"></div>
     </div>
-    <div class="status" id="status"></div>
+    <div class="status" id="status" role="status" aria-live="polite"></div>
   </section>
 
   <section class="privacy" id="privacy">
     <h2 data-i18n="privTitle"></h2>
     <ul><li data-i18n="safe1"></li><li data-i18n="safe2"></li><li data-i18n="safe3"></li><li data-i18n="safe4"></li></ul>
   </section>
-  <div class="foot" data-i18n="foot"></div>
+  <footer class="foot"><span data-i18n="foot"></span> · <a href="https://github.com/crystar-studio/tile-split" target="_blank" rel="noopener noreferrer">GitHub</a></footer>
 </div>
 
 <script>
@@ -218,7 +237,7 @@ count:"分割数",over20:"Xに一度に投稿できるのは20枚までです。
 gap:"TLの隙間を考慮する",gapOn:"画像の間の隙間（約{0}px）を自動で計算して切り落とします",gapOff:"隙間を考慮せず、そのまま分割します",
 format:"保存形式",png:"劣化なし。イラスト・文字向き。容量は大きめ。",jpg:"容量が小さく、どこでも開ける。写真向き。透過は白になります。",webp:"PNGに近い画質で小さい容量。透過対応。古いアプリでは開けないことも。",webpNo:"このブラウザはWebPの書き出しに対応していません。",
 postPreview:"投稿イメージ",orderNote:"番号順に選んで投稿",create:"分割画像を作成",savePhone:"スマホに保存",saveZip:"ZIPで保存",
-phoneNote:"1枚ずつ番号順に保存するので、写真アプリでも順番どおりに並びます。サムネイルをタップすると1枚だけ保存できます。",
+phoneNote:"対応端末では共有メニューから保存できます。保存先や並び順は端末・アプリにより異なります。連続保存できない場合はZIPかサムネイルから保存してください。",
 stale:"設定が変わりました。もう一度作成してください。",making:"作成中… {0}/{1}",made:"{0}枚を作成しました（合計 {1}）",saving:"保存中… {0}/{1}",saved:"{0}枚を保存しました",savedOne:"保存しました：{0}",zipSaved:"ZIPを保存しました（{0}）",zipMaking:"ZIPを作成中…",declined:"保存をキャンセルしました",saveErr:"保存できませんでした（{0}）",loadErr:"この画像は読み込めませんでした。PNGやJPGでお試しください。",
 out:"{0}枚 ・ 高さ {1}px",
 privTitle:"プライバシーと安全性",safe1:"画像の読み込み・分割・書き出しは、すべてお使いの端末のブラウザ内で行われます。",safe2:"画像がサーバーにアップロード・保存されることはありません。",safe3:"画像がAIの学習などに利用されることは一切ありません。",safe4:"外部のライブラリ・フォント・解析ツールは読み込んでいません。ページを閉じると画像データは消えます。",
@@ -229,7 +248,7 @@ count:"Pieces",over20:"X allows up to 20 images per post.",
 gap:"Account for timeline gaps",gapOn:"Automatically cuts out the gap between images (about {0}px)",gapOff:"Splits as-is, ignoring the gaps",
 format:"Format",png:"Lossless. Best for illustrations and text. Larger files.",jpg:"Small and opens anywhere. Best for photos. Transparency becomes white.",webp:"Near-PNG quality at a smaller size. Supports transparency. Some older apps can't open it.",webpNo:"This browser can't export WebP.",
 postPreview:"Post preview",orderNote:"Select in number order",create:"Create images",savePhone:"Save to phone",saveZip:"Save as ZIP",
-phoneNote:"Images are saved one by one in number order, so your Photos app keeps the order. Tap a thumbnail to save just that one.",
+phoneNote:"On supported devices, choose a destination from the share menu. Saving and photo order depend on your device. Use ZIP or individual thumbnails if multiple downloads are blocked.",
 stale:"Settings changed. Create the images again.",making:"Creating… {0}/{1}",made:"Created {0} images ({1} total)",saving:"Saving… {0}/{1}",saved:"Saved {0} images",savedOne:"Saved: {0}",zipSaved:"ZIP saved ({0})",zipMaking:"Building ZIP…",declined:"Saving cancelled",saveErr:"Couldn't save ({0})",loadErr:"Couldn't load this image. Try PNG or JPG.",
 out:"{0} pieces · {1}px tall",
 privTitle:"Privacy & safety",safe1:"Loading, splitting and exporting all happen inside your browser, on your device.",safe2:"Your image is never uploaded to or stored on a server.",safe3:"Your image is never used for AI training or anything else.",safe4:"No external libraries, fonts or analytics are loaded. Closing the page discards your image.",
@@ -325,8 +344,8 @@ function applyI18n(){
 }
 
 /* ============ state ============ */
-const S={img:null,W:0,H:0,base:"image",n:+(store.get("n")||4),cols:2,rows:2,manual:false,
-  ratio:"free",gapOn:store.get("gapOn")!=="0",fmt:store.get("fmt")||"png",
+const S={img:null,W:0,H:0,base:"image",n:Math.min(100,Math.max(2,Math.round(Number(store.get("n"))||4))),cols:2,rows:2,manual:false,
+  ratio:"free",gapOn:store.get("gapOn")!=="0",fmt:["png","jpg","webp"].includes(store.get("fmt"))?store.get("fmt"):"png",
   cuts:[],sel:-1,hover:-1,results:null};
 const WEBP_OK=(()=>{try{const c=document.createElement("canvas");c.width=c.height=1;return c.toDataURL("image/webp").startsWith("data:image/webp")}catch(e){return false}})();
 if(!WEBP_OK&&S.fmt==="webp")S.fmt="png";
@@ -344,7 +363,7 @@ function equalCuts(){
   S.sel=-1;
 }
 function fixCuts(){
-  const gp=gapPx(),m=Math.max(4,S.W*.01),c=S.cuts.map(f=>f*S.W);
+  const gp=gapPx(),m=Math.min(Math.max(1,S.W*.01),(S.W-(S.n-1)*gp)/S.n),c=S.cuts.map(f=>f*S.W);
   for(let i=0;i<c.length;i++){const lo=(i?c[i-1]:-gp/2)+gp+m;if(c[i]<lo)c[i]=lo;}
   for(let i=c.length-1;i>=0;i--){const hi=(i<c.length-1?c[i+1]:S.W+gp/2)-gp-m;if(c[i]>hi)c[i]=hi;}
   S.cuts=c.map(x=>x/S.W);
@@ -356,18 +375,22 @@ function pieces(){
 }
 
 /* ============ loading ============ */
+let loadVersion=0,generating=false;
 function loadFile(f){
   if(!f)return;
+  const version=++loadVersion;
   const url=URL.createObjectURL(f),im=new Image();
   im.onload=()=>{
+    URL.revokeObjectURL(url);
+    if(version!==loadVersion)return;
     S.img=im;S.W=im.naturalWidth;S.H=im.naturalHeight;
     S.base=sanitize((f.name||"").replace(/\.[^.]+$/,""))||"tilesplit";
     equalCuts();
     const d=$("#drop");d.classList.add("mini");d.querySelector("strong").textContent=t("change");
-    $("#editor").hidden=false;$("#postSec").hidden=false;$("#genBtn").disabled=false;
-    clearResults(false);updateUI();
+    $("#editor").hidden=false;$("#postSec").hidden=false;$("#genBtn").disabled=generating;
+    revision++;clearResults(false);updateUI();
   };
-  im.onerror=()=>{URL.revokeObjectURL(url);setStatus(t("loadErr"),true);};
+  im.onerror=()=>{URL.revokeObjectURL(url);if(version!==loadVersion)return;setStatus(t("loadErr"),true);};
   im.src=url;
 }
 const drop=$("#drop"),fileIn=$("#file");
@@ -470,6 +493,7 @@ document.querySelectorAll(".nudge [data-dx]").forEach(b=>{
   let tm=null,iv=null,cnt=0;
   const go=()=>{const s=cnt>25?10:cnt>10?4:1;cnt++;nudge((+b.dataset.dx)*s);};
   const stop=()=>{clearTimeout(tm);clearInterval(iv);tm=iv=null;cnt=0;};
+  b.addEventListener("click",e=>{if(e.detail===0)nudge(+b.dataset.dx);});
   b.addEventListener("pointerdown",e=>{e.preventDefault();go();tm=setTimeout(()=>{iv=setInterval(go,45)},320);});
   ["pointerup","pointerleave","pointercancel"].forEach(ev=>b.addEventListener(ev,stop));
 });
@@ -493,7 +517,8 @@ $("#count").addEventListener("change",e=>setN(e.target.value));
 $("#gapOn").addEventListener("change",e=>{S.gapOn=e.target.checked;store.set("gapOn",S.gapOn?"1":"0");if(S.img)fixCuts();changed(true);});
 $("#fmt").addEventListener("click",e=>{const b=e.target.closest("button");if(!b||b.disabled)return;S.fmt=b.dataset.f;store.set("fmt",S.fmt);changed(true);});
 addEventListener("resize",schedule);
-function changed(settings){if(S.results)clearResults(true);if(settings)updateUI();else schedule();}
+let revision=0;
+function changed(settings){revision++;if(S.results)clearResults(true);if(settings)updateUI();else schedule();}
 
 /* ============ names ============ */
 function sanitize(s){return (s||"").replace(/[\\/:*?"<>|\u0000-\u001f]+/g,"_").replace(/\s+/g,"_").replace(/^\.+/,"").slice(0,60);}
@@ -509,23 +534,35 @@ function clearResults(stale){
   S.results=null;$("#saveArea").hidden=true;$("#thumbs").innerHTML="";setStatus(stale?t("stale"):"");
 }
 $("#genBtn").addEventListener("click",async()=>{
-  if(!S.img)return;const btn=$("#genBtn");btn.disabled=true;
+  if(!S.img||generating)return;
+  generating=true;
+  const btn=$("#genBtn"),version=revision,img=S.img,fmt=S.fmt,base=S.base;
+  btn.disabled=true;
+  clearResults(false);
   const G=pieces(),n=S.n,oh=S.H,cv=document.createElement("canvas"),ctx=cv.getContext("2d");
   const out=[];
-  for(let i=0;i<n;i++){
-    const p=G.p[i],ow=Math.max(1,Math.round(p.w));btn.textContent=t("making",i+1,n);
-    cv.width=ow;cv.height=oh;ctx.imageSmoothingQuality="high";
-    if(S.fmt==="jpg"){ctx.fillStyle="#fff";ctx.fillRect(0,0,ow,oh);}
-    ctx.drawImage(S.img,p.x,0,p.w,S.H,0,0,ow,oh);
-    const blob=await new Promise(res=>cv.toBlob(res,MIME[S.fmt],.92));
-    out.push({blob,name:fname(i+1,n),url:URL.createObjectURL(blob),done:false});
-  }
-  S.results=out;renderThumbs();$("#saveArea").hidden=false;
-  btn.textContent=t("create");btn.disabled=false;
-  setStatus(t("made",n,fmtSize(out.reduce((s,r)=>s+r.blob.size,0))));
+  try{
+    for(let i=0;i<n;i++){
+      if(version!==revision)throw new Error("stale");
+      const p=G.p[i],ow=Math.max(1,Math.round(p.w));btn.textContent=t("making",i+1,n);
+      cv.width=ow;cv.height=oh;ctx.imageSmoothingQuality="high";
+      if(fmt==="jpg"){ctx.fillStyle="#fff";ctx.fillRect(0,0,ow,oh);}
+      ctx.drawImage(img,p.x,0,p.w,oh,0,0,ow,oh);
+      const blob=await new Promise(res=>cv.toBlob(res,MIME[fmt],.92));
+      if(!blob||blob.type!==MIME[fmt])throw new Error("export");
+      out.push({blob,name:`${base}_${String(i+1).padStart(Math.max(2,String(n).length),"0")}.${EXT[fmt]}`,url:URL.createObjectURL(blob),done:false});
+    }
+    if(version!==revision)throw new Error("stale");
+    S.results=out;renderThumbs();$("#saveArea").hidden=false;
+    setStatus(t("made",n,fmtSize(out.reduce((s,r)=>s+r.blob.size,0))));
+  }catch(e){
+    out.forEach(r=>URL.revokeObjectURL(r.url));
+    setStatus(t(e.message==="stale"?"stale":"saveErr",e.message),true);
+  }finally{generating=false;btn.textContent=t("create");btn.disabled=!S.img;}
 });
 function renderThumbs(){
   const box=$("#thumbs");box.innerHTML="";
+  if(!S.results)return;
   S.results.forEach((r,i)=>{
     const b=document.createElement("button");b.className="th"+(r.done?" done":"");b.title=r.name;
     b.innerHTML=`<img alt="${r.name}" src="${r.url}"><span class="n">${i+1}</span>`;
@@ -535,18 +572,13 @@ function renderThumbs(){
 }
 
 /* ============ saving ============ */
-let DL=null,dlTried=false;
-async function initDL(){if(dlTried)return;dlTried=true;try{if(window.claude&&typeof window.claude.use==="function")DL=await window.claude.use("downloads");}catch(e){DL=null;}}
-addEventListener("load",()=>{initDL();});
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function saveFile(name,blob){
-  await initDL();
-  if(DL){for(let a=0;a<3;a++){try{await DL.save({filename:name,data:blob});return "ok";}catch(e){const c=(e&&e.code)||"unavailable";if(c==="rate_limited"){await sleep(1200);continue;}return c;}}return "rate_limited";}
   try{const a=document.createElement("a"),u=URL.createObjectURL(blob);a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),5000);return "ok";}catch(e){return "unavailable";}
 }
 $("#phoneBtn").addEventListener("click",async()=>{
-  if(!S.results)return;await initDL();const list=S.results;
-  if(!DL&&navigator.canShare){
+  if(!S.results)return;const list=S.results;
+  if(navigator.canShare){
     const files=list.map(r=>new File([r.blob],r.name,{type:r.blob.type}));
     if(navigator.canShare({files})){try{await navigator.share({files});list.forEach(r=>r.done=true);renderThumbs();setStatus(t("saved",files.length));return;}catch(e){if(e.name==="AbortError"){setStatus(t("declined"));return;}}}
   }
@@ -555,14 +587,15 @@ $("#phoneBtn").addEventListener("click",async()=>{
     if(list[i].done)continue;setStatus(t("saving",i+1,list.length));
     const res=await saveFile(list[i].name,list[i].blob);
     if(res!=="ok"){btn.disabled=false;setStatus(res==="declined"?t("declined"):t("saveErr",res),res!=="declined");return;}
-    list[i].done=true;renderThumbs();await sleep(DL?250:700);
+    list[i].done=true;renderThumbs();await sleep(700);
   }
   btn.disabled=false;setStatus(t("saved",list.length));
 });
 $("#zipBtn").addEventListener("click",async()=>{
   if(!S.results)return;setStatus(t("zipMaking"));
-  const zip=await makeZip(S.results);
-  const res=await saveFile(`${S.base}_${S.results.length}pcs.zip`,zip);
+  const list=S.results,base=S.base;
+  const zip=await makeZip(list);
+  const res=await saveFile(`${base}_${list.length}pcs.zip`,zip);
   setStatus(res==="ok"?t("zipSaved",fmtSize(zip.size)):res==="declined"?t("declined"):t("saveErr",res),res!=="ok"&&res!=="declined");
 });
 
